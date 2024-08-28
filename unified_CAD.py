@@ -42,13 +42,6 @@ device = torch.device('cpu')
 # %%
 # ---------------- HYPERPARAMETERS ----------------#
 input_size = 4  # number of features
-# num_layers = 2  # number of GRU layers
-# hidden_size = 512
-# out_size = 3600
-# learning_rate = 0.0006408341334322661
-# num_layers = 10
-# layer_exp = 10
-# P = 0.7     # Dropout probability (1 being no dropout)
 scheduler_step = 20
 scheduler_gamma = 0.1
 criterion = nn.MSELoss(reduction='mean')
@@ -64,11 +57,7 @@ def model_layers(input_size, num_layers, layer_exp, P, out_size):
     for i, exp in enumerate(exp_layers):
         n_units_FC = int((2 ** exp) / P)
         layers.append(nn.Linear(in_features, n_units_FC))
-        # # Try with batch norm
-        # layers.append(nn.BatchNorm1d(n_units_FC))
         layers.append(nn.Tanh())
-        # Try with dropout
-        # if i > 5:
         layers.append(nn.Dropout(p=(1 - P)))
         in_features = n_units_FC
     layers.append(nn.Linear(in_features, out_size))
@@ -77,10 +66,7 @@ def model_layers(input_size, num_layers, layer_exp, P, out_size):
 
 # %%
 def ddp_setup(method):
-    # print('Setting up DDP')
     comm_local_group = comm.init(method)
-    # os.environ['OMP_NUM_THREADS'] = '1'
-    # torch.set_default_device(int(os.environ["LOCAL_RANK"]))
     return comm_local_group
 
 
@@ -102,23 +88,10 @@ class Trainer:
         self.scheduler = scheduler
         self.epochs_run = 0
         self.loss = float('inf')
-        # self.snapshot_path = snapshot_path
-        # if os.path.exists(snapshot_path):
-        #     print("Loading snapshot")
-        #     self._load_snapshot(snapshot_path)
-
-        # self.model = DDP(self.model, device_ids=[self.local_rank])
         self.model = model
 
         self.loss_logger = float('inf')
         self.val_loss = float('inf')
-
-    # def _load_snapshot(self, snapshot_path):
-    #     loc = device
-    #     snapshot = torch.load(snapshot_path, map_location=loc)
-    #     self.model.load_state_dict(snapshot["MODEL_STATE"])
-    #     self.epochs_run = snapshot["EPOCHS_RUN"]
-    #     print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
@@ -152,14 +125,7 @@ class Trainer:
         self.model.train()
 
     def _run_epoch(self, epoch):
-        # checks
-        # print(f'Train loader is type {type(self.train_data)}')
-        # next_iter = next(iter(self.train_data))
 
-        # b_sz = len(next(iter(self.train_data))[0])
-        # steps = len(next(iter(self.train_data))[1])
-        # print(f'The number of steps is {steps}')
-        # print(f"[CPU Core:{self.cpu_id}] Epoch {epoch} | Loss: {self.loss:.4f} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
 
         self.loss_logger = 0
@@ -169,21 +135,10 @@ class Trainer:
             targets = targets.to(device)
             self._run_batch(source, targets)
 
-            # print(f"[CPU Core:{self.global_rank}] Epoch {epoch} | Loss: {(self.loss_logger/(batch_idx+1)):.4f}| Steps: {len(self.train_data)}")
-
         if self.global_rank == 0:
             print(f"[Epoch {epoch} | Loss: {(self.loss_logger / (batch_idx + 1)):.4f} | Steps: {len(self.train_data)}")
 
-        # print(f'Number of batches per worker is {j}.')
         self.scheduler.step()
-
-    # def _save_snapshot(self, epoch):
-    #     snapshot = {
-    #         "MODEL_STATE": self.model.module.state_dict(),
-    #         "EPOCHS_RUN": epoch,
-    #         }
-    #     torch.save(snapshot, self.snapshot_path)
-    #     print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
 
     def train(self, max_epochs):
         # run training loop
@@ -194,9 +149,6 @@ class Trainer:
             self._run_epoch(epoch)
             toc_epoch = time.time()
             time_epoch += toc_epoch - tic_epoch
-            # ----------- REMOVED SAVE SNAPSHOT ------------#
-            # if self.cpu_id == 0 and epoch % self.save_every == 0:
-            #     self._save_snapshot(epoch)
 
         # average time per epoch and reduce across processes
         time_epoch /= max_epochs
@@ -223,9 +175,6 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
     local_rank = comm.get_local_rank()
     size = comm.get_size()
     local_size = comm.get_local_size()
-
-    # data directory
-    # root_dir = '/Users/rodrigohadlich/PycharmProjects/PyTorch/hdf5_data'
 
     # Get data loaders and data shape
     train_loader, train_size, validation_loader, validation_size = get_dataloader(root_dir, device, size, rank,
