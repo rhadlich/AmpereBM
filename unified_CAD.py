@@ -214,7 +214,7 @@ class Trainer:
             print(f'The MSE of the model on the validation set is {self.val_loss}.')
 
 
-def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, learning_rate, batch_size, P, n_trials):
+def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learning_rate, batch_size, P, n_trials):
     # Initialize distributed process group
     comm_local_group = ddp_setup(method)
 
@@ -247,7 +247,7 @@ def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, lear
                 )
 
     # save model weights
-    filename_model = 'model_weights_' + model_size + '.pth'
+    filename_model = 'model_weights_' + node_type + '.pth'
     if rank == 0:
         torch.save(model.state_dict(), filename_model)
 
@@ -261,7 +261,7 @@ def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, lear
     mae = np.zeros([n_trials])
 
     # save optimizer weights
-    filename_optimizer = 'optimizer_weights_' + model_size + '.pth'
+    filename_optimizer = 'optimizer_weights_' + node_type + '.pth'
     if rank == 0:
         torch.save(optimizer.state_dict(), filename_optimizer)
 
@@ -275,9 +275,11 @@ def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, lear
         optimizer.load_state_dict(torch.load(filename_optimizer))
         model.train()
         trainer = Trainer(model, train_loader, validation_loader, optimizer, scheduler)
+        start_time = time.gmtime(time.time())
         tic = time.time()
         trainer.train(total_epochs)
         toc = time.time()
+        end_time = time.gmtime(time.time())
         t = toc - tic
         t = torch.tensor(t)
         loss = trainer.val_loss
@@ -304,18 +306,16 @@ def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, lear
     # save things in hdf5 file
     if rank == 0:
         current_dir = os.getcwd()
-        file_dir = os.path.join(current_dir, 'spr_comp_temp.h5')
+        file_dir = os.path.join(current_dir, 'ampere_bm.h5')
         with h5py.File(file_dir, 'a') as f:
 
             # check to see if file already existed/was populated
-            if 'small' not in f:
+            if node_type not in f:
                 # needs to create groups
-                f.create_group("small")
-                f.create_group("medium")
-                f.create_group("large")
+                f.create_group(node_type)
 
             # at this point groups for model size exist
-            grp1 = f[model_size]
+            grp1 = f[node_type]
 
             n_processes = str(size)
 
@@ -335,6 +335,14 @@ def main(total_epochs, root_dir, model_size, method, num_layers, layer_exp, lear
                                 shape=(n_trials,),
                                 dtype='f',
                                 data=times_epoch, )
+            grp2.create_dataset(name='start time',
+                                shape=(n_trials,),
+                                dtype='f',
+                                data=start_time, )
+            grp2.create_dataset(name='end time',
+                                shape=(n_trials,),
+                                dtype='f',
+                                data=end_time, )
             grp2.create_dataset(name='mse',
                                 shape=(n_trials,),
                                 dtype='f',
@@ -356,7 +364,7 @@ if __name__ == "__main__":
     # parser.add_argument('save_every', type=int, help='How often to save a snapshot')
     parser.add_argument('root_dir', type=str,
                         help='Root directory where train, validation, and test folders are located')
-    parser.add_argument('model_size', type=str, help='Whether it is the large or small model')
+    parser.add_argument('node_type', type=str, help='Whether it is SPR, Grace, Ampere, or AmpereOneX')
     parser.add_argument('method', type=str, help='Whether to use nccl or mpi backend')
     parser.add_argument('--num_layers', default=4, type=int, help='Number of hidden layers (default: 4)')
     parser.add_argument('--num_nodes_exp', default=8, type=int,
@@ -367,6 +375,6 @@ if __name__ == "__main__":
     parser.add_argument('--n_trials', default=30, type=int, help='Number of consecutive trials (default: 30)')
     args = parser.parse_args()
 
-    main(args.total_epochs, args.root_dir, args.model_size, args.method, args.num_layers, args.num_nodes_exp, args.lr,
+    main(args.total_epochs, args.root_dir, args.node_type, args.method, args.num_layers, args.num_nodes_exp, args.lr,
          args.batch_size, args.p, args.n_trials)
 
