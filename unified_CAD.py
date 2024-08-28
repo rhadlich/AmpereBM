@@ -224,11 +224,11 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         optimizer.load_state_dict(torch.load(filename_optimizer))
         model.train()
         trainer = Trainer(model, train_loader, validation_loader, optimizer, scheduler)
-        start_time = time.gmtime(time.time())
+        start_time = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
         tic = time.time()
         trainer.train(total_epochs)
         toc = time.time()
-        end_time = time.gmtime(time.time())
+        end_time = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
         t = toc - tic
         t = torch.tensor(t)
         loss = trainer.val_loss
@@ -286,11 +286,11 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
                                 data=times_epoch, )
             grp2.create_dataset(name='start time',
                                 shape=(n_trials,),
-                                dtype='f',
+                                dtype='S20',
                                 data=start_time, )
             grp2.create_dataset(name='end time',
                                 shape=(n_trials,),
-                                dtype='f',
+                                dtype='S20',
                                 data=end_time, )
             grp2.create_dataset(name='mse',
                                 shape=(n_trials,),
