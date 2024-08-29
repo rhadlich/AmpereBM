@@ -208,6 +208,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
     times_epoch = np.zeros([n_trials])
     mse = np.zeros([n_trials])
     mae = np.zeros([n_trials])
+    start_times = []
+    end_times = []
 
     # save optimizer weights
     filename_optimizer = 'optimizer_weights_' + node_type + '.pth'
@@ -245,6 +247,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         times_epoch[i] = trainer.time_epoch.numpy(force=True)
         mse[i] = loss.numpy(force=True)
         mae[i] = mae_loss.numpy(force=True)
+        start_times.append(start_time)
+        end_times.append(end_time)
 
         # print things
         if rank == 0:
@@ -287,11 +291,11 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
             grp2.create_dataset(name='start time',
                                 shape=(n_trials,),
                                 dtype='S20',
-                                data=start_time, )
+                                data=start_times, )
             grp2.create_dataset(name='end time',
                                 shape=(n_trials,),
                                 dtype='S20',
-                                data=end_time, )
+                                data=end_times, )
             grp2.create_dataset(name='mse',
                                 shape=(n_trials,),
                                 dtype='f',
