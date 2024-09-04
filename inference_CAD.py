@@ -97,6 +97,10 @@ class Trainer:
         # self.optimizer.zero_grad()
         # source = source.float()
         # targets = targets.float()
+
+        if self.global_rank == 0:
+            print('CHECK 5')
+
         output = self.model(source)
         output = torch.squeeze(output)
         loss = criterion(output, targets)
@@ -130,6 +134,9 @@ class Trainer:
 
         self.loss_logger = 0
 
+        if self.global_rank == 0:
+            print('CHECK 4')
+
         time_batch = 0
         for batch_idx, (source, targets, filename, idx) in enumerate(self.train_data):
             source = source.to(device)
@@ -149,6 +156,10 @@ class Trainer:
 
         time_epoch = 0
         for epoch in range(self.epochs_run, max_epochs):
+
+            if self.global_rank == 0:
+                print('CHECK 3')
+
             tic_epoch = time.time()
             self._run_epoch(epoch)
             toc_epoch = time.time()
@@ -223,6 +234,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         torch.save(optimizer.state_dict(), filename_optimizer)
 
     dist.barrier()
+    if rank == 0:
+        print('CHECK 1')
 
     # loop for running the same model multiple times and record times
     for i in range(n_trials):
@@ -232,6 +245,10 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         # optimizer.load_state_dict(torch.load(filename_optimizer))
         model.eval()
         trainer = Trainer(model, train_loader, validation_loader, optimizer, scheduler)
+
+        if rank == 0:
+            print('CHECK 2')
+
         start_time = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
         tic = time.time()
         trainer.train(total_epochs)
