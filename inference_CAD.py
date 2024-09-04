@@ -140,7 +140,7 @@ class Trainer:
 
         if self.global_rank == 0:
             print(f"[Epoch {epoch} | Loss: {(self.loss_logger / (batch_idx + 1)):.4f} | Steps: {len(self.train_data)}")
-            print(f"Average batch time: {time_batch / (batch_idx + 1)}s")
+            print(f"Average batch time: {time_batch / (batch_idx + 1)}s | Number of batches: {batch_idx+1}")
 
         self.scheduler.step()
 
