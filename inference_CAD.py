@@ -240,7 +240,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         t = toc - tic
         t = torch.tensor(t)
         loss = trainer.val_loss
-        mae_loss = trainer.val_mae
+        # mae_loss = trainer.val_mae
+        mae_loss = 0
         dist.all_reduce(t)
         dist.all_reduce(loss)
         dist.all_reduce(mae_loss)
