@@ -153,6 +153,8 @@ class Trainer:
             self._run_epoch(epoch)
             toc_epoch = time.time()
             time_epoch += toc_epoch - tic_epoch
+            if self.global_rank == 0:
+                print(f"Epoch time: {toc_epoch - tic_epoch}s")
 
         # average time per epoch and reduce across processes
         time_epoch /= max_epochs
