@@ -249,7 +249,7 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         mae_loss = 0
         dist.all_reduce(t)
         # dist.all_reduce(loss)
-        dist.all_reduce(mae_loss)
+        # dist.all_reduce(mae_loss)
         t /= size
         loss /= size
         mae_loss /= size
