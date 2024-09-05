@@ -100,7 +100,6 @@ class Trainer:
 
         if self.global_rank == 0:
             print('CHECK 5')
-
         output = self.model(source)
         output = torch.squeeze(output)
         loss = criterion(output, targets)
@@ -138,18 +137,19 @@ class Trainer:
             print('CHECK 4')
 
         time_batch = 0
-        for batch_idx, (source, targets, filename, idx) in enumerate(self.train_data):
-            source = source.to(device)
-            targets = targets.to(device)
-            tic_batch = time.time()
-            self._run_batch(source, targets)
-            time_batch += time.time() - tic_batch
+        with torch.no_grad():
+            for batch_idx, (source, targets, filename, idx) in enumerate(self.train_data):
+                source = source.to(device)
+                targets = targets.to(device)
+                # tic_batch = time.time()
+                self._run_batch(source, targets)
+                # time_batch += time.time() - tic_batch
 
         if self.global_rank == 0:
             print(f"[Epoch {epoch} | Loss: {(self.loss_logger / (batch_idx + 1)):.4f} | Steps: {len(self.train_data)}")
-            print(f"Average batch time: {time_batch / (batch_idx + 1)}s | Number of batches: {batch_idx+1}")
+            # print(f"Average batch time: {time_batch / (batch_idx + 1)}s | Number of batches: {batch_idx+1}")
 
-        self.scheduler.step()
+        # self.scheduler.step()
 
     def train(self, max_epochs):
         # run training loop
