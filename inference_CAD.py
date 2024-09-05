@@ -98,8 +98,6 @@ class Trainer:
         # source = source.float()
         # targets = targets.float()
 
-        if self.global_rank == 0:
-            print('CHECK 5')
         output = self.model(source)
         output = torch.squeeze(output)
         loss = criterion(output, targets)
@@ -133,9 +131,6 @@ class Trainer:
 
         self.loss_logger = 0
 
-        if self.global_rank == 0:
-            print('CHECK 4')
-
         time_batch = 0
         with torch.no_grad():
             for batch_idx, (source, targets, filename, idx) in enumerate(self.train_data):
@@ -147,7 +142,7 @@ class Trainer:
 
         if self.global_rank == 0:
             print(f"[Epoch {epoch} | Loss: {(self.loss_logger / (batch_idx + 1)):.4f} | Steps: {len(self.train_data)}")
-            # print(f"Average batch time: {time_batch / (batch_idx + 1)}s | Number of batches: {batch_idx+1}")
+            print(f"Average batch time: {time_batch / (batch_idx + 1)}s | Number of batches: {batch_idx+1}")
 
         # self.scheduler.step()
 
@@ -157,8 +152,6 @@ class Trainer:
         time_epoch = 0
         for epoch in range(self.epochs_run, max_epochs):
 
-            if self.global_rank == 0:
-                print('CHECK 3')
 
             tic_epoch = time.time()
             self._run_epoch(epoch)
@@ -234,8 +227,6 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         torch.save(optimizer.state_dict(), filename_optimizer)
 
     dist.barrier()
-    if rank == 0:
-        print('CHECK 1')
 
     # loop for running the same model multiple times and record times
     for i in range(n_trials):
@@ -245,9 +236,6 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         # optimizer.load_state_dict(torch.load(filename_optimizer))
         model.eval()
         trainer = Trainer(model, train_loader, validation_loader, optimizer, scheduler)
-
-        if rank == 0:
-            print('CHECK 2')
 
         start_time = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
         tic = time.time()
@@ -260,7 +248,7 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         # mae_loss = trainer.val_mae
         mae_loss = 0
         dist.all_reduce(t)
-        dist.all_reduce(loss)
+        # dist.all_reduce(loss)
         dist.all_reduce(mae_loss)
         t /= size
         loss /= size
@@ -283,7 +271,7 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
     # save things in hdf5 file
     if rank == 0:
         current_dir = os.getcwd()
-        file_dir = os.path.join(current_dir, 'ampere_bm.h5')
+        file_dir = os.path.join(current_dir, 'ampere_bm_inference.h5')
         with h5py.File(file_dir, 'a') as f:
 
             # check to see if file already existed/was populated
