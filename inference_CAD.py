@@ -257,8 +257,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
         # store time and losses into np array
         times_total[i] = t.numpy(force=True)
         times_epoch[i] = trainer.time_epoch.numpy(force=True)
-        mse[i] = loss.numpy(force=True)
-        mae[i] = mae_loss.numpy(force=True)
+        # mse[i] = loss.numpy(force=True)
+        # mae[i] = mae_loss.numpy(force=True)
         start_times.append(start_time)
         end_times.append(end_time)
 
@@ -308,14 +308,14 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
                                 shape=(n_trials,),
                                 dtype='S20',
                                 data=end_times, )
-            grp2.create_dataset(name='mse',
-                                shape=(n_trials,),
-                                dtype='f',
-                                data=mse, )
-            grp2.create_dataset(name='mae',
-                                shape=(n_trials,),
-                                dtype='f',
-                                data=mae, )
+            # grp2.create_dataset(name='mse',
+            #                     shape=(n_trials,),
+            #                     dtype='f',
+            #                     data=mse, )
+            # grp2.create_dataset(name='mae',
+            #                     shape=(n_trials,),
+            #                     dtype='f',
+            #                     data=mae, )
 
     # end distributed process group
     destroy_process_group()
