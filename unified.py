@@ -99,9 +99,6 @@ class Trainer:
         # targets = targets.float()
         output = self.model(source)
         output = torch.squeeze(output)
-        if self.local_rank == 0:
-            print(f'Source shape: {source.shape}')
-            print(f'Output shape: {output.shape}')
         loss = criterion(output, targets)
         self.loss = loss
         self.loss_logger += loss
