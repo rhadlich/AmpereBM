@@ -112,5 +112,6 @@ class GetDataset(Dataset):
         data = (data - mean) / std_dev
 
         data = np.squeeze(data)
+        label = np.squeeze(label)
 
         return data, label, filename, idx
