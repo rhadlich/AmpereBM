@@ -193,6 +193,8 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
     # Create model and wrap it with DDP
     torch.manual_seed(123)
     layers = model_layers(input_size, num_layers, layer_exp, P, out_size)
+    if rank == 0:
+        print(layers)
     model = nn.Sequential(*layers)
     model = model.to(device)
     model = DDP(model,
