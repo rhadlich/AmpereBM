@@ -270,7 +270,7 @@ def main(total_epochs, root_dir, node_type, method, num_layers, layer_exp, learn
     # save things in hdf5 file
     if rank == 0:
         current_dir = os.getcwd()
-        file_dir = os.path.join(current_dir, 'ampere_bm_inference.h5')
+        file_dir = os.path.join(current_dir, 'ampere_bm.h5')
         with h5py.File(file_dir, 'a') as f:
 
             # check to see if file already existed/was populated
